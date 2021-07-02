@@ -2,6 +2,9 @@
 # -*- coding: UTF-8 -*- 
 import sys
 import os
+from enum import Enum
+
+from huobi.model.market import candlestick
 from huobi_Python.build.lib.huobi.model.generic import symbol
 from huobi.connection.websocket_req_client import WebSocketReqClient
 import time
@@ -17,21 +20,89 @@ from huobi.exception.huobi_api_exception import HuobiApiException
 # os.system("$Env:http_proxy=\"http://127.0.0.1:7890\";$Env:https_proxy=\"http://127.0.0.1:7890\"")
 # os.system("set http_proxy=http://127.0.0.1:1080")
 # os.system("set https_proxy=http://127.0.0.1:1080")
+class CheckType(Enum):
+    ONE_HOUR = 1,
+    FOUR_HOURS = 2,
+    ONE_DAY = 3,
+    ONE_WEEK = 4,
+    ONE_MONTH = 5,
+
+    FIVE_MINS = 10,
+    TEN_MINS = 11,
+    FIFTEEN_MINS = 12
+
 
 SHOW_DEBUG_LOG = True
 checkMA = False
 onlyCheckUSDTSymbol = True
-startTimeFromNow = 3600 * 24 * 1#与当前时间差大于该值的数据忽略
-limitPriceRate = 0.1#价格涨跌幅要小于这个限额
-usdValueLimit = 500000#交易价值要大于这个限额
+startTimeFromNow = 3600 * 24 * 0.5#检测时间跨度
+limitPriceRate = 0.15#价格涨跌幅要小于这个限额
+usdValueLimit = 1000#交易价值要大于这个限额
 btcValueLimit = usdValueLimit / 35000
 ethValueLimit = usdValueLimit / 2200
 htValueLimit = usdValueLimit / 10
 minVolueScale = 5
 timeLimit = 0#最近n个k线不能超过MA200
+candlestickName = "60min"
+singleCandlestickInterval = 3600
+
+checkType = CheckType.TEN_MINS
+if checkType == CheckType.ONE_HOUR:
+    candlestickName = "60min"
+    singleCandlestickInterval = 3600
+    startTimeFromNow = 3600 * 24 * 7
+    limitPriceRate = 0.15#价格涨跌幅要小于这个限额
+    usdValueLimit = 1000#交易价值要大于这个限额
+    minVolueScale = 5
+    btcValueLimit = usdValueLimit / 35000
+    ethValueLimit = usdValueLimit / 2200
+    htValueLimit = usdValueLimit / 10
+
+elif checkType == CheckType.FOUR_HOURS:
+    candlestickName = "4hour"
+    singleCandlestickInterval = 3600 * 4
+    startTimeFromNow = 3600 * 24 * 7
+    limitPriceRate = 0.15#价格涨跌幅要小于这个限额
+    usdValueLimit = 1000#交易价值要大于这个限额
+    minVolueScale = 5
+    btcValueLimit = usdValueLimit / 35000
+    ethValueLimit = usdValueLimit / 2200
+    htValueLimit = usdValueLimit / 10
+
+elif checkType == CheckType.ONE_DAY:
+    candlestickName = "1day"
+    singleCandlestickInterval = 3600 * 24
+    startTimeFromNow = 3600 * 24 * 30
+    limitPriceRate = 0.15#价格涨跌幅要小于这个限额
+    usdValueLimit = 1000#交易价值要大于这个限额
+    minVolueScale = 5
+    btcValueLimit = usdValueLimit / 35000
+    ethValueLimit = usdValueLimit / 2200
+    htValueLimit = usdValueLimit / 10
+
+elif checkType == CheckType.FIVE_MINS:
+    candlestickName = "5min"
+    singleCandlestickInterval = 3600 * 24
+    startTimeFromNow = 3600 * 24
+    limitPriceRate = 0.05#价格涨跌幅要小于这个限额
+    usdValueLimit = 10000#交易价值要大于这个限额
+    minVolueScale = 15
+    btcValueLimit = usdValueLimit / 35000
+    ethValueLimit = usdValueLimit / 2200
+    htValueLimit = usdValueLimit / 10
+
+elif checkType == CheckType.TEN_MINS:
+    candlestickName = "10min"
+    singleCandlestickInterval = 3600 * 24
+    startTimeFromNow = 3600 * 24
+    limitPriceRate = 0.05#价格涨跌幅要小于这个限额
+    usdValueLimit = 10000#交易价值要大于这个限额
+    minVolueScale = 15
+    btcValueLimit = usdValueLimit / 35000
+    ethValueLimit = usdValueLimit / 2200
+    htValueLimit = usdValueLimit / 10
+
 allTargetSymbols = []
-
-
 with open("TargetSymbols.txt", 'w+') as f:
     f.seek(0)
     f.truncate()
@@ -228,13 +299,13 @@ def checkAllSymbols():
     count = 0
     symbolLen = len(symbolsList)
     for symbol in symbolsList:
-        time.sleep(0.1)
+        time.sleep(0.01)
         count += 1
         if onlyCheckUSDTSymbol:
             if symbol.endswith("usdt"):
-                market_client.req_candlestick(symbol, "60min", checkSymbol, from_ts_second=int(t) - 3600 * 300, end_ts_second=int(t))
+                market_client.req_candlestick(symbol, candlestickName, checkSymbol, from_ts_second=int(t) - singleCandlestickInterval * 800, end_ts_second=int(t))
         else:
-            market_client.req_candlestick(symbol, "60min", checkSymbol, from_ts_second=int(t) - 3600 * 300, end_ts_second=int(t))
+            market_client.req_candlestick(symbol, candlestickName, checkSymbol, from_ts_second=int(t) - singleCandlestickInterval * 800, end_ts_second=int(t))
         # if (symbolLen == count):
         #     time.sleep(0.5)
         #     with open("TargetSymbols.txt", 'a+') as f:
