@@ -28,7 +28,6 @@ class CheckType(Enum):
     ONE_MONTH = 5,
 
     FIVE_MINS = 10,
-    TEN_MINS = 11,
     FIFTEEN_MINS = 12
 
 
@@ -91,8 +90,8 @@ elif checkType == CheckType.FIVE_MINS:
     ethValueLimit = usdValueLimit / 2200
     htValueLimit = usdValueLimit / 10
 
-elif checkType == CheckType.TEN_MINS:
-    candlestickName = "10min"
+elif checkType == CheckType.FIFTEEN_MINS:
+    candlestickName = "15min"
     singleCandlestickInterval = 3600 * 24
     startTimeFromNow = 3600 * 24
     limitPriceRate = 0.05#价格涨跌幅要小于这个限额
